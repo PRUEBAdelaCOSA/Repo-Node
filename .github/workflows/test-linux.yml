@@ -40,7 +40,7 @@ jobs:
       - uses: actions/checkout@692973e3d937129bcbf40652eb9f2f61becf3332  # v4.1.7
         with:
           persist-credentials: false
-          path: "dir%20with unusual chars åß∂ƒ©∆¬…"
+          path: node
       - name: Set up Python ${{ env.PYTHON_VERSION }}
         uses: actions/setup-python@f677139bbe7f9c59b41e40162b753c062f5d49a3  # v5.2.0
         with:
@@ -51,8 +51,8 @@ jobs:
           version: v0.8.1
       - name: Environment Information
         run: npx envinfo
-      - run: ln -s 'dir%20with unusual chars åß∂ƒ©∆¬…' node
       - name: Build
         run: make -C node build-ci -j2 V=1 CONFIG_FLAGS="--error-on-warn"
+      - run: mv node 'dir%20with unusual chars åß∂ƒ©∆¬…'
       - name: Test
         run: make -C 'dir%20with unusual chars åß∂ƒ©∆¬…' run-ci -j2 V=1 TEST_CI_ARGS="-p actions --measure-flakiness 9"
