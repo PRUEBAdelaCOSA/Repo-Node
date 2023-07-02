@@ -1,4 +1,4 @@
-import { mustCall, mustNotMutateObjectDeep } from '../common/index.mjs';
+import { mustCall, mustNotMutateObjectDeep, isInsideCWDWithUnusualChars } from '../common/index.mjs';
 
 import assert from 'assert';
 import fs from 'fs';
@@ -370,7 +370,7 @@ function nextdir(dirname) {
 }
 
 // It throws an error if attempt is made to copy socket.
-if (!isWindows) {
+if (!isWindows && !isInsideCWDWithUnusualChars) {
   const src = nextdir();
   mkdirSync(src);
   const dest = nextdir();
