@@ -65,7 +65,7 @@ jobs:
       # happen anymore running this step here first, that's also useful
       # information.)
       - name: tools/doc/node_modules workaround
-        run: make tools/doc/node_modules
+        run: make -C node tools/doc/node_modules
       # This is needed due to https://github.com/nodejs/build/issues/3878
       - name: Cleanup
         run: |
