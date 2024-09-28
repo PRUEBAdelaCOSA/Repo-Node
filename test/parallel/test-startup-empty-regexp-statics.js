@@ -2,7 +2,7 @@
 
 const common = require('../common');
 
-if (common.isInsideCWDWithUnusualChars) {
+if (common.isInsideDirWithUnusualChars) {
   common.skip('expected failure');
 }
 

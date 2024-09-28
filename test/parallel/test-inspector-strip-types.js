@@ -35,7 +35,7 @@ async function runTest() {
     return notification.params.url === scriptPath || notification.params.url === scriptURL.href;
   });
   // Verify that the script has a sourceURL, hinting that it is a generated source.
-  assert(scriptParsed.params.hasSourceURL || common.isInsideCWDWithUnusualChars);
+  assert(scriptParsed.params.hasSourceURL || common.isInsideDirWithUnusualChars);
 
   await session.waitForPauseOnStart();
   await session.runToCompletion();

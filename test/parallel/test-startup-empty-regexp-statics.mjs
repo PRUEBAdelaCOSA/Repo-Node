@@ -4,7 +4,7 @@
 import common from '../common/index.js';
 import assert from 'node:assert';
 
-if (!common.isInsideCWDWithUnusualChars) {
+if (!common.isInsideDirWithUnusualChars) {
   assert.strictEqual(RegExp.$_, '');
   assert.strictEqual(RegExp.$0, undefined);
   assert.strictEqual(RegExp.$1, '');

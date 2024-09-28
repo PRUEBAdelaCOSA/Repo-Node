@@ -738,7 +738,7 @@ if (!isWindows && !isInsideDirWithUnusualChars) {
 }
 
 // It returns an error if attempt is made to copy socket.
-if (!isWindows && !isInsideCWDWithUnusualChars) {
+if (!isWindows && !isInsideDirWithUnusualChars) {
   const src = nextdir();
   mkdirSync(src);
   const dest = nextdir();
