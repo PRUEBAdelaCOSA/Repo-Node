@@ -4,7 +4,7 @@
 // restoring state from a snapshot
 
 require('../common');
-const { spawnSyncAndAssert } = require('../common/child_process');
+const { isInsideCWDWithUnusualChars, spawnSyncAndAssert } = require('../common/child_process');
 const tmpdir = require('../common/tmpdir');
 const fixtures = require('../common/fixtures');
 const assert = require('assert');
@@ -27,6 +27,7 @@ const expected = [
     file,
   ], {
     cwd: tmpdir.path,
+    env: { ...process.env, DIRNAME_CONTAINS_SHELL_UNSAFE_CHARS: isInsideCWDWithUnusualChars ? 'TRUE' : '' },
   }, {
     trim: true,
     stdout(output) {
@@ -43,6 +44,7 @@ const expected = [
     file,
   ], {
     cwd: tmpdir.path,
+    env: { ...process.env, DIRNAME_CONTAINS_SHELL_UNSAFE_CHARS: isInsideCWDWithUnusualChars ? 'TRUE' : '' },
   }, {
     trim: true,
     stdout(output) {
