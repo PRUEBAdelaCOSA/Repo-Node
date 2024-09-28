@@ -2,7 +2,7 @@
 const common = require('../common');
 if (!common.hasCrypto)
   common.skip('missing crypto');
-if (common.isInsideCWDWithUnusualChars)
+if (common.isInsideDirWithUnusualChars)
   common.skip('npm does not support this install path');
 
 const path = require('path');

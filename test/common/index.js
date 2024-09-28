@@ -1144,13 +1144,12 @@ const common = {
     return fs.readFileSync(__filename).includes('\r\n') ? '\r\n' : '\n';
   },
 
-  get isInsideCWDWithUnusualChars() {
-    const cwd = process.cwd();
-    return cwd.includes('%') ||
-           (!isWindows && cwd.includes('\\')) ||
-           cwd.includes('\n') ||
-           cwd.includes('\r') ||
-           cwd.includes('\t');
+  get isInsideDirWithUnusualChars() {
+    return __dirname.includes('%') ||
+           (!isWindows && __dirname.includes('\\')) ||
+           __dirname.includes('\n') ||
+           __dirname.includes('\r') ||
+           __dirname.includes('\t');
   },
 };
 
