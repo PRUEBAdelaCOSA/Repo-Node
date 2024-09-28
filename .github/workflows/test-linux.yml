@@ -61,4 +61,4 @@ jobs:
           cd "$DIR"
           ./tools/test.py --flaky-tests keep_retrying -p actions -j 4
         env:
-          DIR: "dir%20with unusual\"chars$'åß∂ƒ©∆¬…`"
+          DIR: dir%20with unusual\"chars$'åß∂ƒ©∆¬…`
