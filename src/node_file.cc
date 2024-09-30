@@ -3200,8 +3200,8 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
     }
   }
 
-  std::u8string dest_path_str = dest_path.u8string();
-  std::u8string src_path_str = src_path.u8string();
+  std::string dest_path_str = dest_path.string();
+  std::string src_path_str = src_path.string();
   if (!src_path_str.ends_with(std::filesystem::path::preferred_separator)) {
     src_path_str += std::filesystem::path::preferred_separator;
   }
@@ -3209,7 +3209,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   if (src_is_dir && dest_path_str.starts_with(src_path_str)) {
     std::string message = "Cannot copy %s to a subdirectory of self %s";
     return THROW_ERR_FS_CP_EINVAL(
-        env, message.c_str(), src_path.string(), dest_path.string());
+        env, message.c_str(), src_path_str, dest_path_str);
   }
 
   auto dest_parent = dest_path.parent_path();
@@ -3222,7 +3222,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
             src_path, dest_path.parent_path(), error_code)) {
       std::string message = "Cannot copy %s to a subdirectory of self %s";
       return THROW_ERR_FS_CP_EINVAL(
-          env, message.c_str(), src_path.string(), dest_path.string());
+          env, message.c_str(), src_path_str, dest_path_str);
     }
 
     // If equivalent fails, it's highly likely that dest_parent does not exist
@@ -3237,25 +3237,24 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
     std::string message = "Recursive option not enabled, cannot copy a directory: %s";
     return THROW_ERR_FS_EISDIR(env,
                                message.c_str(),
-                               src_path.string());
+                               src_path_str);
   }
 
   switch (src_status.type()) {
     case std::filesystem::file_type::socket: {
-      std::u8string message = u8"Cannot copy a socket file: " + dest_path_str;
+      std::string message = "Cannot copy a socket file: %s";
       return THROW_ERR_FS_CP_SOCKET(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), dest_path_str);
     }
     case std::filesystem::file_type::fifo: {
-      std::u8string message = u8"Cannot copy a FIFO pipe: " + dest_path_str;
+      std::string message = "Cannot copy a FIFO pipe: %s";
       return THROW_ERR_FS_CP_FIFO_PIPE(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), dest_path_str);
     }
     case std::filesystem::file_type::unknown: {
-      std::u8string message =
-          u8"Cannot copy an unknown file type: " + dest_path_str;
+      std::string message = "Cannot copy an unknown file type: %s";
       return THROW_ERR_FS_CP_UNKNOWN(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), dest_path_str);
     }
     default:
       break;
