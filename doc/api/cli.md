@@ -3053,7 +3053,6 @@ one is included in the list below.
 * `--experimental-abortcontroller`
 * `--experimental-async-context-frame`
 * `--experimental-default-type`
-* `--experimental-detect-module`
 * `--experimental-eventsource`
 * `--experimental-import-meta-resolve`
 * `--experimental-json-modules`
@@ -3061,7 +3060,6 @@ one is included in the list below.
 * `--experimental-modules`
 * `--experimental-permission`
 * `--experimental-print-required-tla`
-* `--experimental-require-module`
 * `--experimental-shadow-realm`
 * `--experimental-specifier-resolution`
 * `--experimental-sqlite`
@@ -3094,8 +3092,10 @@ one is included in the list below.
 * `--network-family-autoselection-attempt-timeout`
 * `--no-addons`
 * `--no-deprecation`
+* `--no-experimental-detect-module`
 * `--no-experimental-global-navigator`
 * `--no-experimental-repl-await`
+* `--no-experimental-require-module`
 * `--no-experimental-websocket`
 * `--no-extra-info-on-fatal-exception`
 * `--no-force-async-hooks-checks`
