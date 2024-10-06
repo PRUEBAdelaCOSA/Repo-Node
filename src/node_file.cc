@@ -3127,6 +3127,26 @@ static void GetFormatOfExtensionlessFile(
   return args.GetReturnValue().Set(EXTENSIONLESS_FORMAT_JAVASCRIPT);
 }
 
+#ifdef _WIN32
+std::wstring ConvertToWideString(const std::string& str) {
+    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+    std::wstring wstrTo(size_needed, 0);
+    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+    return wstrTo;
+}
+
+std::string ConvertWideToUTF8(const std::wstring& wstr)
+{
+    if (wstr.empty())
+        return std::string();
+
+    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+    std::string strTo(size_needed, 0);
+    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
+    return strTo;
+}
+#endif
+
 static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
   Isolate* isolate = env->isolate();
@@ -3139,17 +3159,21 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   THROW_IF_INSUFFICIENT_PERMISSIONS(
       env, permission::PermissionScope::kFileSystemRead, src.ToStringView());
 
-  auto src_path = std::filesystem::path(src.ToU8StringView());
-
   BufferValue dest(isolate, args[1]);
   CHECK_NOT_NULL(*dest);
   ToNamespacedPath(env, &dest);
   THROW_IF_INSUFFICIENT_PERMISSIONS(
       env, permission::PermissionScope::kFileSystemWrite, dest.ToStringView());
-
-  auto dest_path = std::filesystem::path(dest.ToU8StringView());
   bool dereference = args[2]->IsTrue();
   bool recursive = args[3]->IsTrue();
+
+#ifdef _WIN32
+  auto src_path = std::filesystem::path(ConvertToWideString(src.ToString()));
+  auto dest_path = std::filesystem::path(ConvertToWideString(dest.ToString()));
+#else
+  auto src_path = std::filesystem::path(dest.ToStringView());
+  auto dest_path = std::filesystem::path(dest.ToStringView());
+#endif
 
   std::error_code error_code;
   auto src_status = dereference
@@ -3179,59 +3203,81 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   if (!error_code) {
     // Check if src and dest are identical.
     if (std::filesystem::equivalent(src_path, dest_path)) {
-      std::u8string message =
-          u8"src and dest cannot be the same " + dest_path.u8string();
+      std::string message = "src and dest cannot be the same %s";
+#ifdef _WIN32
       return THROW_ERR_FS_CP_EINVAL(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
+#else
+      return THROW_ERR_FS_CP_EINVAL(
+          env, message.c_str(), dest_path.string());
+#endif
     }
 
     const bool dest_is_dir =
         dest_status.type() == std::filesystem::file_type::directory;
-
     if (src_is_dir && !dest_is_dir) {
-      std::u8string message = u8"Cannot overwrite non-directory " +
-                              src_path.u8string() + u8" with directory " +
-                              dest_path.u8string();
+      std::string message = "Cannot overwrite non-directory %s with directory %s";
+#ifdef _WIN32
       return THROW_ERR_FS_CP_DIR_TO_NON_DIR(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), ConvertWideToUTF8(src_path.wstring()), ConvertWideToUTF8(dest_path.wstring()));
+#else
+      return THROW_ERR_FS_CP_DIR_TO_NON_DIR(
+          env, message.c_str(), src_path.string(), dest_path.wstring());
+#endif
     }
 
+
     if (!src_is_dir && dest_is_dir) {
-      std::u8string message = u8"Cannot overwrite directory " +
-                              dest_path.u8string() + u8" with non-directory " +
-                              src_path.u8string();
+      std::string message = "Cannot overwrite directory %s with non-directory %s";
+#ifdef _WIN32
       return THROW_ERR_FS_CP_NON_DIR_TO_DIR(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()), ConvertWideToUTF8(src_path.wstring()));
+#else
+      return THROW_ERR_FS_CP_NON_DIR_TO_DIR(
+          env, message.c_str(), dest_path.string(), src_path.string());
+#endif
     }
   }
 
-  std::u8string dest_path_str = dest_path.u8string();
-  std::u8string src_path_str = src_path.u8string();
+#ifdef _WIN32
+  std::string dest_path_str = ConvertWideToUTF8(dest_path.wstring());
+  std::string src_path_str = ConvertWideToUTF8(src_path.wstring());
+#else
+  std::string dest_path_str = dest_path.string();
+  std::string src_path_str = src_path.string();
+#endif
+
   if (!src_path_str.ends_with(std::filesystem::path::preferred_separator)) {
     src_path_str += std::filesystem::path::preferred_separator;
   }
   // Check if dest_path is a subdirectory of src_path.
   if (src_is_dir && dest_path_str.starts_with(src_path_str)) {
-    std::u8string message = u8"Cannot copy " + src_path.u8string() +
-                            u8" to a subdirectory of self " +
-                            dest_path.u8string();
+    std::string message = "Cannot copy %s to a subdirectory of self %s";
+#ifdef _WIN32
     return THROW_ERR_FS_CP_EINVAL(
-        env, reinterpret_cast<const char*>(message.c_str()));
+        env, message.c_str(), ConvertWideToUTF8(src_path.wstring()), ConvertWideToUTF8(dest_path.wstring()));
+#else
+    return THROW_ERR_FS_CP_EINVAL(
+        env, message.c_str(), src_path.string(), dest_path.string());
+#endif
   }
 
   auto dest_parent = dest_path.parent_path();
   // "/" parent is itself. Therefore, we need to check if the parent is the same
   // as itself.
   while (src_path.parent_path() != dest_parent &&
-         dest_parent.has_parent_path() &&
-         dest_parent.parent_path() != dest_parent) {
+        dest_parent.has_parent_path() &&
+        dest_parent.parent_path() != dest_parent) {
     if (std::filesystem::equivalent(
             src_path, dest_path.parent_path(), error_code)) {
-      std::u8string message = u8"Cannot copy " + src_path.u8string() +
-                              u8" to a subdirectory of self " +
-                              dest_path.u8string();
+      std::string message = "Cannot copy %s to a subdirectory of self %s";
+#ifdef _WIN32
       return THROW_ERR_FS_CP_EINVAL(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), ConvertWideToUTF8(src_path.wstring()), ConvertWideToUTF8(dest_path.wstring()));
+#else
+      return THROW_ERR_FS_CP_EINVAL(
+          env, message.c_str(), src_path.string(), dest_path.string());
+#endif
     }
 
     // If equivalent fails, it's highly likely that dest_parent does not exist
@@ -3243,32 +3289,58 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   }
 
   if (src_is_dir && !recursive) {
-    std::u8string message =
-        u8"Recursive option not enabled, cannot copy a directory: " +
-        src_path.u8string();
-    return THROW_ERR_FS_EISDIR(env,
-                               reinterpret_cast<const char*>(message.c_str()));
+    std::string message =
+        "Recursive option not enabled, cannot copy a directory: %s";
+#ifdef _WIN32
+      return THROW_ERR_FS_EISDIR(
+        env, message.c_str(), ConvertWideToUTF8(src_path.wstring()));
+#else
+      return THROW_ERR_FS_EISDIR(
+        env, message.c_str(), src_path.string());
+#endif
   }
 
+#ifdef _WIN32
   switch (src_status.type()) {
     case std::filesystem::file_type::socket: {
-      std::u8string message = u8"Cannot copy a socket file: " + dest_path_str;
+      std::string message = "Cannot copy a socket file: %s";
       return THROW_ERR_FS_CP_SOCKET(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
     }
     case std::filesystem::file_type::fifo: {
-      std::u8string message = u8"Cannot copy a FIFO pipe: " + dest_path_str;
+      std::string message = "Cannot copy a FIFO pipe: %s";
       return THROW_ERR_FS_CP_FIFO_PIPE(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
     }
     case std::filesystem::file_type::unknown: {
-      std::u8string message =
-          u8"Cannot copy an unknown file type: " + dest_path_str;
+      std::string message =
+          "Cannot copy an unknown file type: %s";
       return THROW_ERR_FS_CP_UNKNOWN(
-          env, reinterpret_cast<const char*>(message.c_str()));
+          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
     }
     default:
       break;
+#else
+  switch (src_status.type()) {
+    case std::filesystem::file_type::socket: {
+      std::string message = "Cannot copy a socket file: %s";
+      return THROW_ERR_FS_CP_SOCKET(
+          env, message.c_str(), dest_path.string());
+    }
+    case std::filesystem::file_type::fifo: {
+      std::string message = "Cannot copy a FIFO pipe: %s";
+      return THROW_ERR_FS_CP_FIFO_PIPE(
+          env, message.c_str(), dest_path.string());
+    }
+    case std::filesystem::file_type::unknown: {
+      std::string message =
+          "Cannot copy an unknown file type: %s";
+      return THROW_ERR_FS_CP_UNKNOWN(
+          env, message.c_str(), dest_path.string());
+    }
+    default:
+      break;
+#endif
   }
 
   // Optimization opportunity: Check if this "exists" call is good for
