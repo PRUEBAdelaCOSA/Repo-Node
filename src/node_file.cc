@@ -3171,7 +3171,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   auto src_path = std::filesystem::path(ConvertToWideString(src.ToString()));
   auto dest_path = std::filesystem::path(ConvertToWideString(dest.ToString()));
 #else
-  auto src_path = std::filesystem::path(dest.ToStringView());
+  auto src_path = std::filesystem::path(src.ToStringView());
   auto dest_path = std::filesystem::path(dest.ToStringView());
 #endif
 
@@ -3209,7 +3209,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
           env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
 #else
       return THROW_ERR_FS_CP_EINVAL(
-          env, message.c_str(), dest_path.string());
+          env, message.c_str(), dest_path.native());
 #endif
     }
 
@@ -3222,7 +3222,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
           env, message.c_str(), ConvertWideToUTF8(src_path.wstring()), ConvertWideToUTF8(dest_path.wstring()));
 #else
       return THROW_ERR_FS_CP_DIR_TO_NON_DIR(
-          env, message.c_str(), src_path.string(), dest_path.wstring());
+          env, message.c_str(), src_path.native(), dest_path.native());
 #endif
     }
 
@@ -3234,7 +3234,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
           env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()), ConvertWideToUTF8(src_path.wstring()));
 #else
       return THROW_ERR_FS_CP_NON_DIR_TO_DIR(
-          env, message.c_str(), dest_path.string(), src_path.string());
+          env, message.c_str(), dest_path.native(), src_path.native());
 #endif
     }
   }
@@ -3243,8 +3243,8 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   std::string dest_path_str = ConvertWideToUTF8(dest_path.wstring());
   std::string src_path_str = ConvertWideToUTF8(src_path.wstring());
 #else
-  std::string dest_path_str = dest_path.string();
-  std::string src_path_str = src_path.string();
+  auto dest_path_str = dest_path.native();
+  auto src_path_str = src_path.native();
 #endif
 
   if (!src_path_str.ends_with(std::filesystem::path::preferred_separator)) {
@@ -3253,13 +3253,8 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   // Check if dest_path is a subdirectory of src_path.
   if (src_is_dir && dest_path_str.starts_with(src_path_str)) {
     std::string message = "Cannot copy %s to a subdirectory of self %s";
-#ifdef _WIN32
     return THROW_ERR_FS_CP_EINVAL(
-        env, message.c_str(), ConvertWideToUTF8(src_path.wstring()), ConvertWideToUTF8(dest_path.wstring()));
-#else
-    return THROW_ERR_FS_CP_EINVAL(
-        env, message.c_str(), src_path.string(), dest_path.string());
-#endif
+        env, message.c_str(), src_path_str, dest_path_str);
   }
 
   auto dest_parent = dest_path.parent_path();
@@ -3271,13 +3266,8 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
     if (std::filesystem::equivalent(
             src_path, dest_path.parent_path(), error_code)) {
       std::string message = "Cannot copy %s to a subdirectory of self %s";
-#ifdef _WIN32
       return THROW_ERR_FS_CP_EINVAL(
-          env, message.c_str(), ConvertWideToUTF8(src_path.wstring()), ConvertWideToUTF8(dest_path.wstring()));
-#else
-      return THROW_ERR_FS_CP_EINVAL(
-          env, message.c_str(), src_path.string(), dest_path.string());
-#endif
+          env, message.c_str(), src_path_str, dest_path_str);
     }
 
     // If equivalent fails, it's highly likely that dest_parent does not exist
@@ -3291,56 +3281,24 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   if (src_is_dir && !recursive) {
     std::string message =
         "Recursive option not enabled, cannot copy a directory: %s";
-#ifdef _WIN32
-      return THROW_ERR_FS_EISDIR(
-        env, message.c_str(), ConvertWideToUTF8(src_path.wstring()));
-#else
-      return THROW_ERR_FS_EISDIR(
-        env, message.c_str(), src_path.string());
-#endif
+    return THROW_ERR_FS_EISDIR(env, message.c_str(), src_path_str);
   }
 
-#ifdef _WIN32
   switch (src_status.type()) {
     case std::filesystem::file_type::socket: {
       std::string message = "Cannot copy a socket file: %s";
-      return THROW_ERR_FS_CP_SOCKET(
-          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
+      return THROW_ERR_FS_CP_SOCKET(env, message.c_str(), dest_path_str);
     }
     case std::filesystem::file_type::fifo: {
       std::string message = "Cannot copy a FIFO pipe: %s";
-      return THROW_ERR_FS_CP_FIFO_PIPE(
-          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
+      return THROW_ERR_FS_CP_FIFO_PIPE(env, message.c_str(), dest_path_str);
     }
     case std::filesystem::file_type::unknown: {
-      std::string message =
-          "Cannot copy an unknown file type: %s";
-      return THROW_ERR_FS_CP_UNKNOWN(
-          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
+      std::string message = "Cannot copy an unknown file type: %s";
+      return THROW_ERR_FS_CP_UNKNOWN(env, message.c_str(), dest_path_str);
     }
     default:
       break;
-#else
-  switch (src_status.type()) {
-    case std::filesystem::file_type::socket: {
-      std::string message = "Cannot copy a socket file: %s";
-      return THROW_ERR_FS_CP_SOCKET(
-          env, message.c_str(), dest_path.string());
-    }
-    case std::filesystem::file_type::fifo: {
-      std::string message = "Cannot copy a FIFO pipe: %s";
-      return THROW_ERR_FS_CP_FIFO_PIPE(
-          env, message.c_str(), dest_path.string());
-    }
-    case std::filesystem::file_type::unknown: {
-      std::string message =
-          "Cannot copy an unknown file type: %s";
-      return THROW_ERR_FS_CP_UNKNOWN(
-          env, message.c_str(), dest_path.string());
-    }
-    default:
-      break;
-#endif
   }
 
   // Optimization opportunity: Check if this "exists" call is good for
