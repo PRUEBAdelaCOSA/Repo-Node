@@ -3133,7 +3133,7 @@ std::wstring ConvertToWideString(const std::string& str) {
       MultiByteToWideChar(CP_UTF8, 0, &str[0], static_cast<int>(str.size()), nullptr, 0);
   std::wstring wstrTo(size_needed, 0);
   MultiByteToWideChar(
-      CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+      CP_UTF8, 0, &str[0], static_cast<int>(str.size()), &wstrTo[0], size_needed);
   return wstrTo;
 }
 
