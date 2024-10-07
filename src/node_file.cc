@@ -3129,21 +3129,29 @@ static void GetFormatOfExtensionlessFile(
 
 #ifdef _WIN32
 std::wstring ConvertToWideString(const std::string& str) {
-    int size_needed = MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
-    std::wstring wstrTo(size_needed, 0);
-    MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
-    return wstrTo;
+  int size_needed =
+      MultiByteToWideChar(CP_UTF8, 0, &str[0], (int)str.size(), NULL, 0);
+  std::wstring wstrTo(size_needed, 0);
+  MultiByteToWideChar(
+      CP_UTF8, 0, &str[0], (int)str.size(), &wstrTo[0], size_needed);
+  return wstrTo;
 }
 
-std::string ConvertWideToUTF8(const std::wstring& wstr)
-{
-    if (wstr.empty())
-        return std::string();
+std::string ConvertWideToUTF8(const std::wstring& wstr) {
+  if (wstr.empty()) return std::string();
 
-    int size_needed = WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
-    std::string strTo(size_needed, 0);
-    WideCharToMultiByte(CP_UTF8, 0, &wstr[0], (int)wstr.size(), &strTo[0], size_needed, NULL, NULL);
-    return strTo;
+  int size_needed = WideCharToMultiByte(
+      CP_UTF8, 0, &wstr[0], (int)wstr.size(), NULL, 0, NULL, NULL);
+  std::string strTo(size_needed, 0);
+  WideCharToMultiByte(CP_UTF8,
+                      0,
+                      &wstr[0],
+                      (int)wstr.size(),
+                      &strTo[0],
+                      size_needed,
+                      NULL,
+                      NULL);
+  return strTo;
 }
 #endif
 
@@ -3208,30 +3216,36 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
       return THROW_ERR_FS_CP_EINVAL(
           env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
 #else
-      return THROW_ERR_FS_CP_EINVAL(
-          env, message.c_str(), dest_path.native());
+      return THROW_ERR_FS_CP_EINVAL(env, message.c_str(), dest_path.native());
 #endif
     }
 
     const bool dest_is_dir =
         dest_status.type() == std::filesystem::file_type::directory;
     if (src_is_dir && !dest_is_dir) {
-      std::string message = "Cannot overwrite non-directory %s with directory %s";
+      std::string message =
+          "Cannot overwrite non-directory %s with directory %s";
 #ifdef _WIN32
       return THROW_ERR_FS_CP_DIR_TO_NON_DIR(
-          env, message.c_str(), ConvertWideToUTF8(src_path.wstring()), ConvertWideToUTF8(dest_path.wstring()));
+          env,
+          message.c_str(),
+          ConvertWideToUTF8(src_path.wstring()),
+          ConvertWideToUTF8(dest_path.wstring()));
 #else
       return THROW_ERR_FS_CP_DIR_TO_NON_DIR(
           env, message.c_str(), src_path.native(), dest_path.native());
 #endif
     }
 
-
     if (!src_is_dir && dest_is_dir) {
-      std::string message = "Cannot overwrite directory %s with non-directory %s";
+      std::string message =
+          "Cannot overwrite directory %s with non-directory %s";
 #ifdef _WIN32
       return THROW_ERR_FS_CP_NON_DIR_TO_DIR(
-          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()), ConvertWideToUTF8(src_path.wstring()));
+          env,
+          message.c_str(),
+          ConvertWideToUTF8(dest_path.wstring()),
+          ConvertWideToUTF8(src_path.wstring()));
 #else
       return THROW_ERR_FS_CP_NON_DIR_TO_DIR(
           env, message.c_str(), dest_path.native(), src_path.native());
@@ -3261,8 +3275,8 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   // "/" parent is itself. Therefore, we need to check if the parent is the same
   // as itself.
   while (src_path.parent_path() != dest_parent &&
-        dest_parent.has_parent_path() &&
-        dest_parent.parent_path() != dest_parent) {
+         dest_parent.has_parent_path() &&
+         dest_parent.parent_path() != dest_parent) {
     if (std::filesystem::equivalent(
             src_path, dest_path.parent_path(), error_code)) {
       std::string message = "Cannot copy %s to a subdirectory of self %s";
