@@ -3141,7 +3141,7 @@ std::wstring ConvertToWideString(const std::string& str) {
   return wstrTo;
 }
 
-# define StringToPath(path) std::filesystem::path(ConvertToWideString(str))
+#define StringToPath(path) std::filesystem::path(ConvertToWideString(str))
 
 std::string ConvertWideToUTF8(const std::wstring& wstr) {
   if (wstr.empty()) return std::string();
@@ -3166,14 +3166,14 @@ std::string ConvertWideToUTF8(const std::wstring& wstr) {
   return strTo;
 }
 
-# define PathToString(path) ConvertWideToUTF8(dest_path.wstring());
+#define PathToString(path) ConvertWideToUTF8(dest_path.wstring());
 
-#else // _WIN32
+#else  // _WIN32
 
-# define StringToPath(str) std::filesystem::path(str.ToStringView());
-# define PathToString(path) path.native();
+#define StringToPath(str) std::filesystem::path(str.ToStringView());
+#define PathToString(path) path.native();
 
-#endif // _WIN32
+#endif  // _WIN32
 
 static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
@@ -3250,7 +3250,6 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
           env, message.c_str(), dest_path_str, src_path_str);
     }
   }
-
 
   if (!src_path_str.ends_with(std::filesystem::path::preferred_separator)) {
     src_path_str += std::filesystem::path::preferred_separator;
