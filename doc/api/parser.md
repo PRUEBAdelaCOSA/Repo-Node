@@ -44,6 +44,9 @@ added: REPLACEME
   When mode is `'strip-only'`, source maps are not generated, because locations are preserved.
   If `sourceMap` or `sourceUrl` is provided, when mode is `'strip-only'`, an error will be thrown.
 
+_WARNING_: The output of this function should not be considered stable across Node.js versions,
+due to changes in the TypeScript parser.
+
 ```mjs
 import parser from 'node:parser';
 const code = 'const a: number = 1;';
