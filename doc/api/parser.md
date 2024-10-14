@@ -31,7 +31,7 @@ added: REPLACEME
     * `'transform'` Strip type annotations and transform TypeScript features to JavaScript.
   * `sourceMap` {boolean} **Default:** `false`. Only when `mode` is `'transform'`, if `true`, a source map
     will be generated for the transformed code.
-  * `sourceUrl` {string}  Only when `mode` is `'transform'`, specifies the source url used in the source map.
+  * `sourceUrl` {string}  Specifies the source url used in the source map.
 * Returns: {string} The code with type annotations stripped.
   `parser.stripTypeScriptTypes()` removes type annotations from TypeScript code. It
   can be used to strip type annotations from TypeScript code before running it
@@ -42,7 +42,7 @@ added: REPLACEME
   When mode is `'transform'`, it also transforms TypeScript features to JavaScript,
   see [transform TypeScript features][] for more information.
   When mode is `'strip-only'`, source maps are not generated, because locations are preserved.
-  If `sourceMap` or `sourceUrl` is provided, when mode is `'strip-only'`, an error will be thrown.
+  If `sourceMap` is provided, when mode is `'strip-only'`, an error will be thrown.
 
 _WARNING_: The output of this function should not be considered stable across Node.js versions,
 due to changes in the TypeScript parser.
@@ -61,6 +61,24 @@ const code = 'const a: number = 1;';
 const strippedCode = parser.stripTypeScriptTypes(code);
 console.log(strippedCode);
 // Prints: const a         = 1;
+```
+
+If `sourceUrl` is provided, it will be used appended as a comment at the end of the output:
+
+```mjs
+import parser from 'node:parser';
+const code = 'const a: number = 1;';
+const strippedCode = parser.stripTypeScriptTypes(code, { mode: 'strip-only', sourceUrl: 'source.ts' });
+console.log(strippedCode);
+// Prints: const a         = 1\n\n//# sourceURL=source.ts;
+```
+
+```cjs
+const parser = require('node:parser');
+const code = 'const a: number = 1;';
+const strippedCode = parser.stripTypeScriptTypes(code, { mode: 'strip-only', sourceUrl: 'source.ts' });
+console.log(strippedCode);
+// Prints: const a         = 1\n\n//# sourceURL=source.ts;
 ```
 
 When `mode` is `'transform'`, the code is transformed to JavaScript:

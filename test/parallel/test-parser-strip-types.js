@@ -43,9 +43,8 @@ test('stripTypeScriptTypes sourceMap throws when mode is strip-only', () => {
 
 test('stripTypeScriptTypes sourceUrl throws when mode is strip-only', () => {
   const source = 'const x: number = 1;';
-  assert.throws(() => stripTypeScriptTypes(source,
-                                           { mode: 'strip-only', sourceUrl: 'foo.ts' }),
-                { code: 'ERR_INVALID_ARG_VALUE' });
+  const result = stripTypeScriptTypes(source, { mode: 'strip-only', sourceUrl: 'foo.ts' });
+  assert.strictEqual(result, 'const x         = 1;\n\n//# sourceURL=foo.ts');
 });
 
 test('stripTypeScriptTypes source map when mode is transform', () => {
