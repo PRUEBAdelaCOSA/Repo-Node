@@ -3188,9 +3188,13 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
 #ifdef _WIN32
   auto src_path = std::filesystem::path(ConvertToWideString(src.ToString()));
   auto dest_path = std::filesystem::path(ConvertToWideString(dest.ToString()));
+  std::string dest_path_str = ConvertWideToUTF8(dest_path.wstring());
+  std::string src_path_str = ConvertWideToUTF8(src_path.wstring());
 #else
   auto src_path = std::filesystem::path(src.ToStringView());
   auto dest_path = std::filesystem::path(dest.ToStringView());
+  auto dest_path_str = dest_path.native();
+  auto src_path_str = src_path.native();
 #endif
 
   std::error_code error_code;
@@ -3222,12 +3226,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
     // Check if src and dest are identical.
     if (std::filesystem::equivalent(src_path, dest_path)) {
       std::string message = "src and dest cannot be the same %s";
-#ifdef _WIN32
-      return THROW_ERR_FS_CP_EINVAL(
-          env, message.c_str(), ConvertWideToUTF8(dest_path.wstring()));
-#else
-      return THROW_ERR_FS_CP_EINVAL(env, message.c_str(), dest_path.native());
-#endif
+      return THROW_ERR_FS_CP_EINVAL(env, message.c_str(), dest_path_str);
     }
 
     const bool dest_is_dir =
@@ -3235,41 +3234,18 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
     if (src_is_dir && !dest_is_dir) {
       std::string message =
           "Cannot overwrite non-directory %s with directory %s";
-#ifdef _WIN32
       return THROW_ERR_FS_CP_DIR_TO_NON_DIR(
-          env,
-          message.c_str(),
-          ConvertWideToUTF8(src_path.wstring()),
-          ConvertWideToUTF8(dest_path.wstring()));
-#else
-      return THROW_ERR_FS_CP_DIR_TO_NON_DIR(
-          env, message.c_str(), src_path.native(), dest_path.native());
-#endif
+          env, message.c_str(), src_path_str, dest_path_str);
     }
 
     if (!src_is_dir && dest_is_dir) {
       std::string message =
           "Cannot overwrite directory %s with non-directory %s";
-#ifdef _WIN32
       return THROW_ERR_FS_CP_NON_DIR_TO_DIR(
-          env,
-          message.c_str(),
-          ConvertWideToUTF8(dest_path.wstring()),
-          ConvertWideToUTF8(src_path.wstring()));
-#else
-      return THROW_ERR_FS_CP_NON_DIR_TO_DIR(
-          env, message.c_str(), dest_path.native(), src_path.native());
-#endif
+          env, message.c_str(), dest_path_str, src_path_str);
     }
   }
 
-#ifdef _WIN32
-  std::string dest_path_str = ConvertWideToUTF8(dest_path.wstring());
-  std::string src_path_str = ConvertWideToUTF8(src_path.wstring());
-#else
-  auto dest_path_str = dest_path.native();
-  auto src_path_str = src_path.native();
-#endif
 
   if (!src_path_str.ends_with(std::filesystem::path::preferred_separator)) {
     src_path_str += std::filesystem::path::preferred_separator;
