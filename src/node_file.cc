@@ -3141,6 +3141,8 @@ std::wstring ConvertToWideString(const std::string& str) {
   return wstrTo;
 }
 
+# define StringToPath(path) std::filesystem::path(ConvertToWideString(str))
+
 std::string ConvertWideToUTF8(const std::wstring& wstr) {
   if (wstr.empty()) return std::string();
 
@@ -3163,7 +3165,15 @@ std::string ConvertWideToUTF8(const std::wstring& wstr) {
                       nullptr);
   return strTo;
 }
-#endif
+
+# define PathToString(path) ConvertWideToUTF8(dest_path.wstring());
+
+#else // _WIN32
+
+# define StringToPath(str) std::filesystem::path(str.ToStringView());
+# define PathToString(path) path.native();
+
+#endif // _WIN32
 
 static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   Environment* env = Environment::GetCurrent(args);
@@ -3177,25 +3187,17 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   THROW_IF_INSUFFICIENT_PERMISSIONS(
       env, permission::PermissionScope::kFileSystemRead, src.ToStringView());
 
+  auto src_path = StringToPath(src);
+
   BufferValue dest(isolate, args[1]);
   CHECK_NOT_NULL(*dest);
   ToNamespacedPath(env, &dest);
   THROW_IF_INSUFFICIENT_PERMISSIONS(
       env, permission::PermissionScope::kFileSystemWrite, dest.ToStringView());
+
+  auto dest_path = StringToPath(dest);
   bool dereference = args[2]->IsTrue();
   bool recursive = args[3]->IsTrue();
-
-#ifdef _WIN32
-  auto src_path = std::filesystem::path(ConvertToWideString(src.ToString()));
-  auto dest_path = std::filesystem::path(ConvertToWideString(dest.ToString()));
-  std::string dest_path_str = ConvertWideToUTF8(dest_path.wstring());
-  std::string src_path_str = ConvertWideToUTF8(src_path.wstring());
-#else
-  auto src_path = std::filesystem::path(src.ToStringView());
-  auto dest_path = std::filesystem::path(dest.ToStringView());
-  auto dest_path_str = dest_path.native();
-  auto src_path_str = src_path.native();
-#endif
 
   std::error_code error_code;
   auto src_status = dereference
@@ -3221,6 +3223,9 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   bool src_is_dir =
       (src_status.type() == std::filesystem::file_type::directory) ||
       (dereference && src_status.type() == std::filesystem::file_type::symlink);
+
+  auto src_path_str = PathToString(src_path);
+  auto dest_path_str = PathToString(dest_path);
 
   if (!error_code) {
     // Check if src and dest are identical.
