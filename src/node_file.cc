@@ -3141,7 +3141,7 @@ std::wstring ConvertToWideString(const std::string& str) {
   return wstrTo;
 }
 
-#define StringToPath(path) std::filesystem::path(ConvertToWideString(str))
+#define StringToPath(str) std::filesystem::path(ConvertToWideString(str))
 
 std::string ConvertWideToUTF8(const std::wstring& wstr) {
   if (wstr.empty()) return std::string();
@@ -3166,7 +3166,7 @@ std::string ConvertWideToUTF8(const std::wstring& wstr) {
   return strTo;
 }
 
-#define PathToString(path) ConvertWideToUTF8(dest_path.wstring());
+#define PathToString(path) ConvertWideToUTF8(path.wstring());
 
 #else  // _WIN32
 
