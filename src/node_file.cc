@@ -3141,7 +3141,7 @@ std::wstring ConvertToWideString(const std::string& str) {
   return wstrTo;
 }
 
-#define StringToPath(str) std::filesystem::path(ConvertToWideString(str))
+#define BufferValueToPath(str) std::filesystem::path(ConvertToWideString(str.ToString()))
 
 std::string ConvertWideToUTF8(const std::wstring& wstr) {
   if (wstr.empty()) return std::string();
@@ -3170,7 +3170,7 @@ std::string ConvertWideToUTF8(const std::wstring& wstr) {
 
 #else  // _WIN32
 
-#define StringToPath(str) std::filesystem::path(str.ToStringView());
+#define BufferValueToPath(str) std::filesystem::path(str.ToStringView());
 #define PathToString(path) path.native();
 
 #endif  // _WIN32
@@ -3187,7 +3187,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   THROW_IF_INSUFFICIENT_PERMISSIONS(
       env, permission::PermissionScope::kFileSystemRead, src.ToStringView());
 
-  auto src_path = StringToPath(src);
+  auto src_path = BufferValueToPath(src);
 
   BufferValue dest(isolate, args[1]);
   CHECK_NOT_NULL(*dest);
@@ -3195,7 +3195,7 @@ static void CpSyncCheckPaths(const FunctionCallbackInfo<Value>& args) {
   THROW_IF_INSUFFICIENT_PERMISSIONS(
       env, permission::PermissionScope::kFileSystemWrite, dest.ToStringView());
 
-  auto dest_path = StringToPath(dest);
+  auto dest_path = BufferValueToPath(dest);
   bool dereference = args[2]->IsTrue();
   bool recursive = args[3]->IsTrue();
 
