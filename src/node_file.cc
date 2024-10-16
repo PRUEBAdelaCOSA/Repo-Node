@@ -3141,7 +3141,8 @@ std::wstring ConvertToWideString(const std::string& str) {
   return wstrTo;
 }
 
-#define BufferValueToPath(str) std::filesystem::path(ConvertToWideString(str.ToString()))
+#define BufferValueToPath(str)                                                 \
+  std::filesystem::path(ConvertToWideString(str.ToString()))
 
 std::string ConvertWideToUTF8(const std::wstring& wstr) {
   if (wstr.empty()) return std::string();
