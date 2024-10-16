@@ -204,6 +204,10 @@ const tests = [
     flags: ['--test-reporter=tap'],
   },
   {
+    name: 'test-runner/output/non-tty-forced-color-output.js',
+    transform: specTransform,
+  },
+  {
     name: 'test-runner/output/async-test-scheduling.mjs',
     flags: ['--test-reporter=tap'],
   },
