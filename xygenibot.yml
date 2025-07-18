@@ -1,0 +1,21 @@
+deps:
+  # Pull request strategy:
+  # always: always create the PR.
+  # no-duplicate: create PR only if not exists a PR with the same component, version and fix version (open or close).
+  # create-if-close: create PR if not exists a PR with the same component, version and fix version or this is closed (default value).
+  pull-request-strategy: create-if-close
+
+  # Dependencies for bumping
+  # direct: only direct dependencies
+  # indirect: only indirect dependencies
+  # in-app-code: only dependencies that will be part of the application, that is, those dependencies for development or testing will be excluded.
+  # with-vulnerabilities: only dependencies with known vulnerabilities
+  dependency-types:
+    - direct
+
+  # Bumping version strategies:
+  # all: bump to the latest version for the component.
+  # minor: bump with the same major version (for example 1.x.x -> max version less than 2.0.0).
+  # patch: bump with the same major and minor versions (for example 1.1.x -> max version less than 1.2.0).
+  bumping-version-strategies:
+    - patch
